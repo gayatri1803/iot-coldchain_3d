@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColdChain IoT™ | Interactive 3D Hardware Showcase</title>
+  <meta name="description" content="Interactive 3D WebGL model of the IoT Cold Chain Monitoring Device with ESP32-S3, Solar MPPT, Non-volatile FRAM, and multi-sensor suite.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f0ff'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+</head>
+<body>
+
+  <!-- WebGL Three.js Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- 3D Hotspots Screen Overlay -->
+  <div id="hotspots-layer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;"></div>
+
+  <!-- UI HUD Layer -->
+  <div id="ui-overlay">
+    
+    <!-- Top Navigation & Brand Header -->
+    <header class="top-nav glass-panel">
+      <div class="brand-section">
+        <div class="brand-logo-badge">
+          <!-- Cold Chain Hex Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <h1>ColdChain IoT™ <span class="badge-tag">ESP32-S3 Node</span></h1>
+          <div class="brand-subtitle">
+            <span class="status-dot"></span>
+            <span>SYSTEM ONLINE</span>
+            <span style="color:var(--text-dim);">•</span>
+            <span style="color:var(--accent-cyan);">IP67 CERTIFIED</span>
+            <span style="color:var(--text-dim);">•</span>
+            <span>SOLAR HARVESTING ACTIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <!-- Audio SFX Toggle -->
+        <button id="btn-audio" class="btn-action" title="Toggle Sound Feedback">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <span>AUDIO SFX</span>
+        </button>
+
+        <!-- 4K Snapshot Button -->
+        <button id="btn-snapshot" class="btn-action" title="Capture High-Resolution Snapshot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span>SNAPSHOT</span>
+        </button>
+
+        <!-- Record 360 Video Button -->
+        <button id="btn-record" class="btn-action primary" title="Record 360° Turntable Video Clip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3" fill="#ef4444"></circle>
+          </svg>
+          <span>RECORD 360° VIDEO</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Stage -->
+    <main class="main-stage">
+      
+      <!-- Left Sidebar: Modes & Camera Presets -->
+      <aside class="left-sidebar">
+        
+        <!-- View Modes -->
+        <div class="tool-group glass-panel">
+          <div class="group-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>VISUAL MODES</span>
+          </div>
+          <div class="mode-btn-list">
+            <button class="mode-btn active" data-mode="realistic">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              <span>Photorealistic</span>
+            </button>
+            <button class="mode-btn" data-mode="exploded">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span>Exploded View</span>
+            </button>
+            <button class="mode-btn" data-mode="xray">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+              <span>X-Ray Internal</span>
+            </button>
+            <button class="mode-btn" data-mode="cad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              <span>CAD Blueprint</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Camera Angles -->
+        <div class="tool-group glass-panel">
+          <div class="group-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/></svg>
+            <span>CAMERA ANGLES</span>
+          </div>
+          <div class="mode-btn-list">
+            <button class="mode-btn preset-btn" data-preset="isometric">
+              <span>📐 Isometric 360°</span>
+            </button>
+            <button class="mode-btn preset-btn" data-preset="front">
+              <span>📟 Front OLED Face</span>
+            </button>
+            <button class="mode-btn preset-btn" data-preset="top">
+              <span>☀️ Top Solar Harvester</span>
+            </button>
+            <button class="mode-btn preset-btn" data-preset="electronics">
+              <span>⚡ Electronics Stack</span>
+            </button>
+            <button class="mode-btn preset-btn" data-preset="sensors">
+              <span>🌡️ Sensor Suite Pods</span>
+            </button>
+            <button class="mode-btn preset-btn" data-preset="antenna">
+              <span>📡 4G / LoRa Antenna</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Sidebar: Technical Dossier & Live Telemetry Inspector -->
+      <aside class="right-sidebar glass-panel">
+        <div class="inspector-header">
+          <div class="inspector-title-wrap">
+            <div id="ins-category" class="inspector-category">SUBSYSTEM</div>
+            <h2 id="ins-title">Component Inspector</h2>
+          </div>
+          <div id="ins-partno" class="part-number-pill">PART-ID</div>
+        </div>
+
+        <!-- Live Simulated Telemetry Card -->
+        <div class="telemetry-mini-card">
+          <div class="telemetry-header">
+            <span class="telemetry-title">
+              <span class="status-dot"></span> LIVE SENSOR STREAM
+            </span>
+            <span style="font-size:0.68rem; font-family:var(--font-mono); color:var(--text-dim);">1 SEC SYNC</span>
+          </div>
+          <div class="telemetry-rows">
+            <div class="telem-box">
+              <span class="k">CORE TEMP</span>
+              <span id="hud-temp" class="v" style="color:var(--accent-cyan);">4.2°C</span>
+            </div>
+            <div class="telem-box">
+              <span class="k">HUMIDITY</span>
+              <span id="hud-hum" class="v" style="color:var(--accent-cyan);">58.3%</span>
+            </div>
+            <div class="telem-box">
+              <span class="k">ETHYLENE (C₂H₄)</span>
+              <span id="hud-eth" class="v" style="color:var(--accent-amber);">12 ppm</span>
+            </div>
+            <div class="telem-box">
+              <span class="k">BATTERY</span>
+              <span id="hud-bat" class="v" style="color:var(--accent-green);">82%</span>
+            </div>
+            <div class="telem-box" style="grid-column: span 2;">
+              <span class="k">BLOCKCHAIN PROOF</span>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                <span id="hud-block" style="font-size:0.75rem; font-family:var(--font-mono); color:var(--accent-cyan);">#84920</span>
+                <span id="hud-hash" style="font-size:0.75rem; font-family:var(--font-mono); color:#fff;">0x8F4A..7C9B</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Component Description -->
+        <p id="ins-desc" class="part-description">
+          Click on any numbered 3D hotspot or component in the viewport to inspect its architectural specs, pinouts, and cold-chain functions.
+        </p>
+
+        <!-- Specifications Grid -->
+        <div>
+          <div class="feature-list-title">ENGINEERING SPECIFICATIONS</div>
+          <div id="ins-specs" class="spec-grid"></div>
+        </div>
+
+        <!-- Technical Highlights -->
+        <div>
+          <div class="feature-list-title">COLD-CHAIN CAPABILITIES</div>
+          <ul id="ins-bullets" class="feature-bullet-list"></ul>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- Bottom Floating Control Dock -->
+    <footer class="bottom-dock">
+      <div class="control-bar glass-panel">
+        
+        <!-- Exploded View Slider -->
+        <div class="explode-slider-wrap">
+          <span class="slider-label">EXPLODED VIEW</span>
+          <input type="range" id="explode-slider" class="range-slider" min="0" max="100" value="0">
+        </div>
+
+        <div class="divider-v"></div>
+
+        <!-- Turntable Auto-Spin Toggle -->
+        <button id="btn-spin" class="dock-btn active" title="Toggle Auto-Rotation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- Reset Camera -->
+        <button id="btn-reset" class="dock-btn" title="Reset Camera View">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="12 8 8 12 12 16 12 8"/>
+          </svg>
+        </button>
+
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast-msg">Notification</div>
+
+  <!-- Three.js Libraries -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/OrbitControls.js"></script>
+
+  <!-- Application Modules -->
+  <script src="js/telemetry.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/materials.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
